@@ -36,6 +36,12 @@ class Period:
         self.months = months
         self.monthly_deposit = monthly_deposit
 
+    def return_monthly_periods(self):
+        months = []
+        for m in range(self.months):
+            months.append(Period(months=1, monthly_deposit=self.monthly_deposit))
+        return months
+
 
 def make_initial_compoundresult(initial_amount):
     return CompoundResult(parent=None, annual_return=None, months=None, monthly_deposit=None, initial_amount=initial_amount)
@@ -66,3 +72,11 @@ test_min_rate = 11
 test_max_rate = 11
 test_initial_amount = 20000
 generate_compound_possibilities(test_initial_amount, test_periods, test_min_rate, test_max_rate)
+
+print("goal amount printed for every month:")
+goal_monthly = []
+for period in test_periods:
+    temp_periods = period.return_monthly_periods()
+    for month in temp_periods:
+        goal_monthly.append(month)
+generate_compound_possibilities(test_initial_amount, goal_monthly, test_min_rate, test_max_rate)
