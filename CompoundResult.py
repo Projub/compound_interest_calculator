@@ -86,10 +86,23 @@ def generate_compound_result_array(initial_amount, periods, avg_return):
 
 
 # TODO: check for date_string format
-def generate_cic_excel(period_list, date_string):
-    # testing the code:
+def generate_cic_excel(period_list, start_date, start_portfolio):
+    file_name = 'CIC'
+    excel_path = f"excels/{file_name}.xlsx"
+    writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
+
+    # TODO: Periods sheet in the front
+    # sheet_name = 'periods'
+    # df = pd.DataFrame()
+    # df.insert(loc=0, column='period', value=range(1, len(period_list)+1))
+    # df.insert(loc=0, column='start_date', value=range()
+    # df.insert(loc=0, column='end_date', value=range()
+    # df.insert(loc=0, column='monthly deposit', value=range()
+
+    sheet_name = 'possibilities'
+    # column titles
     periods_months = []
-    date = dt.datetime.strptime(date_string, '%d/%m/%Y')
+    date = dt.datetime.strptime(start_date, '%d/%m/%Y')
     dates = [date]
     for p in period_list:
         periods_months = periods_months + p.return_monthly_periods()
@@ -99,27 +112,16 @@ def generate_cic_excel(period_list, date_string):
     year_months = []
     for date in dates:
         year_months.append(date.strftime('%Y-%m'))
-
     df = pd.DataFrame([], columns=year_months)
-
+    # generate rows
     yoy_returns = range(26)
     for ret in yoy_returns:
-        df = df.append(pd.DataFrame([generate_compound_result_array(20000, periods_months, ret)], columns=year_months))
+        df = df.append(pd.DataFrame([generate_compound_result_array(start_portfolio, periods_months, ret)], columns=year_months))
     yoy_return_strings = []
     for yoy in yoy_returns:
         yoy_return_strings.append(f'{yoy}%')
     df.insert(loc=0, column='avg_yoy', value=yoy_return_strings)
-
     print(df)
-
-    # TODO: excel sheet with period info (first) / period info in excel name
-
-    file_name = 'CIC'
-    today = dt.date.strftime(dt.date.today(), '%d_%m_%Y')
-    excel_path = f"excels/{file_name}.xlsx"
-    writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
-
-    sheet_name = 'possibilities'
     df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
     worksheet = writer.sheets[sheet_name]  # pull worksheet object
     for idx, col in enumerate(df):  # loop through all columns
@@ -130,13 +132,13 @@ def generate_cic_excel(period_list, date_string):
         )) + 2  # adding extra space
         worksheet.set_column(idx, idx, max_len)  # set column width
 
+    sheet_name = 'yoy_mom'
     df = pd.DataFrame()
     df.insert(loc=0, column='avg_yoy(%)', value=range(101))
     avg_monthly_returns = []
     for ret in CompoundResult.monthly_returns:
         avg_monthly_returns.append(round((ret-1)*100, 3))
     df.insert(loc=1, column='avg_mom(%)', value=avg_monthly_returns)
-    sheet_name = 'yoy_mom'
     df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
     worksheet = writer.sheets[sheet_name]  # pull worksheet object
     for idx, col in enumerate(df):  # loop through all columns
