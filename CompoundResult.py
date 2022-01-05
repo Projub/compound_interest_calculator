@@ -93,13 +93,58 @@ for p in periods:
 for m in periods_months:
     date = date + pd.DateOffset(months=1)
     dates.append(date)
+periods = []
+for date in dates:
+    periods.append(date.strftime('%Y-%m'))
 
-df = pd.DataFrame([], columns=dates)
-for ret in range(26):
-    df = df.append(pd.DataFrame([generate_compound_result_array(20000, periods_months, ret)], columns=dates))
+df = pd.DataFrame([], columns=periods)
+
+yoy_returns = range(26)
+for ret in yoy_returns:
+    df = df.append(pd.DataFrame([generate_compound_result_array(20000, periods_months, ret)], columns=periods))
+yoy_return_strings = []
+for yoy in yoy_returns:
+    yoy_return_strings.append(f'{yoy}%')
+df.insert(loc=0, column='avg_yoy', value=yoy_return_strings)
 
 print(df)
 
+# TODO: excel sheet with period info (first) / period info in excel name
+
+file_name = 'CIC'
+today = dt.date.strftime(dt.date.today(), '%d_%m_%Y')
+excel_path = f"excels/{file_name}.xlsx"
+writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
+
+sheet_name = 'possibilities'
+df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+worksheet = writer.sheets[sheet_name]  # pull worksheet object
+for idx, col in enumerate(df):  # loop through all columns
+    series = df[col]
+    max_len = max((
+        series.astype(str).map(len).max(),  # len of largest item
+        len(str(series.name))  # len of column name/header
+    )) + 2  # adding extra space
+    worksheet.set_column(idx, idx, max_len)  # set column width
+
+df = pd.DataFrame()
+df.insert(loc=0, column='avg_yoy(%)', value=range(101))
+avg_monthly_returns = []
+for ret in CompoundResult.monthly_returns:
+    avg_monthly_returns.append(round((ret-1)*100, 3))
+df.insert(loc=1, column='avg_mom(%)', value=avg_monthly_returns)
+sheet_name = 'yoy_mom'
+df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+worksheet = writer.sheets[sheet_name]  # pull worksheet object
+for idx, col in enumerate(df):  # loop through all columns
+    series = df[col]
+    max_len = max((
+        series.astype(str).map(len).max(),  # len of largest item
+        len(str(series.name))  # len of column name/header
+    )) + 2  # adding extra space
+    worksheet.set_column(idx, idx, max_len)  # set column width
+
+writer.save()
 
 # print("goal amount printed for every month:")
 # goal_monthly = []
