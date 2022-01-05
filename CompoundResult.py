@@ -81,75 +81,78 @@ def generate_compound_result_array(initial_amount, periods, avg_return):
     # print(row)
     return results
 
+#periods = [Period(months=24, monthly_deposit=1250), Period(months=50, monthly_deposit=1000), Period(months=75), Period(months=75), Period(months=75)]
+#given_date = '01/09/2020'
 
-# testing the code:
-periods = [Period(months=24, monthly_deposit=1250), Period(months=50, monthly_deposit=1000), Period(months=75), Period(months=75), Period(months=75)]
-periods_months = []
-given_date = '01/09/2020'
-date = dt.datetime.strptime(given_date, '%d/%m/%Y')
-dates = [date]
-for p in periods:
-    periods_months = periods_months + p.return_monthly_periods()
-for m in periods_months:
-    date = date + pd.DateOffset(months=1)
-    dates.append(date)
-periods = []
-for date in dates:
-    periods.append(date.strftime('%Y-%m'))
 
-df = pd.DataFrame([], columns=periods)
+# TODO: check for date_string format
+def generate_cic_excel(period_list, date_string):
+    # testing the code:
+    periods_months = []
+    date = dt.datetime.strptime(date_string, '%d/%m/%Y')
+    dates = [date]
+    for p in period_list:
+        periods_months = periods_months + p.return_monthly_periods()
+    for m in periods_months:
+        date = date + pd.DateOffset(months=1)
+        dates.append(date)
+    year_months = []
+    for date in dates:
+        year_months.append(date.strftime('%Y-%m'))
 
-yoy_returns = range(26)
-for ret in yoy_returns:
-    df = df.append(pd.DataFrame([generate_compound_result_array(20000, periods_months, ret)], columns=periods))
-yoy_return_strings = []
-for yoy in yoy_returns:
-    yoy_return_strings.append(f'{yoy}%')
-df.insert(loc=0, column='avg_yoy', value=yoy_return_strings)
+    df = pd.DataFrame([], columns=year_months)
 
-print(df)
+    yoy_returns = range(26)
+    for ret in yoy_returns:
+        df = df.append(pd.DataFrame([generate_compound_result_array(20000, periods_months, ret)], columns=year_months))
+    yoy_return_strings = []
+    for yoy in yoy_returns:
+        yoy_return_strings.append(f'{yoy}%')
+    df.insert(loc=0, column='avg_yoy', value=yoy_return_strings)
 
-# TODO: excel sheet with period info (first) / period info in excel name
+    print(df)
 
-file_name = 'CIC'
-today = dt.date.strftime(dt.date.today(), '%d_%m_%Y')
-excel_path = f"excels/{file_name}.xlsx"
-writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
+    # TODO: excel sheet with period info (first) / period info in excel name
 
-sheet_name = 'possibilities'
-df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
-worksheet = writer.sheets[sheet_name]  # pull worksheet object
-for idx, col in enumerate(df):  # loop through all columns
-    series = df[col]
-    max_len = max((
-        series.astype(str).map(len).max(),  # len of largest item
-        len(str(series.name))  # len of column name/header
-    )) + 2  # adding extra space
-    worksheet.set_column(idx, idx, max_len)  # set column width
+    file_name = 'CIC'
+    today = dt.date.strftime(dt.date.today(), '%d_%m_%Y')
+    excel_path = f"excels/{file_name}.xlsx"
+    writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
 
-df = pd.DataFrame()
-df.insert(loc=0, column='avg_yoy(%)', value=range(101))
-avg_monthly_returns = []
-for ret in CompoundResult.monthly_returns:
-    avg_monthly_returns.append(round((ret-1)*100, 3))
-df.insert(loc=1, column='avg_mom(%)', value=avg_monthly_returns)
-sheet_name = 'yoy_mom'
-df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
-worksheet = writer.sheets[sheet_name]  # pull worksheet object
-for idx, col in enumerate(df):  # loop through all columns
-    series = df[col]
-    max_len = max((
-        series.astype(str).map(len).max(),  # len of largest item
-        len(str(series.name))  # len of column name/header
-    )) + 2  # adding extra space
-    worksheet.set_column(idx, idx, max_len)  # set column width
+    sheet_name = 'possibilities'
+    df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+    worksheet = writer.sheets[sheet_name]  # pull worksheet object
+    for idx, col in enumerate(df):  # loop through all columns
+        series = df[col]
+        max_len = max((
+            series.astype(str).map(len).max(),  # len of largest item
+            len(str(series.name))  # len of column name/header
+        )) + 2  # adding extra space
+        worksheet.set_column(idx, idx, max_len)  # set column width
 
-writer.save()
+    df = pd.DataFrame()
+    df.insert(loc=0, column='avg_yoy(%)', value=range(101))
+    avg_monthly_returns = []
+    for ret in CompoundResult.monthly_returns:
+        avg_monthly_returns.append(round((ret-1)*100, 3))
+    df.insert(loc=1, column='avg_mom(%)', value=avg_monthly_returns)
+    sheet_name = 'yoy_mom'
+    df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+    worksheet = writer.sheets[sheet_name]  # pull worksheet object
+    for idx, col in enumerate(df):  # loop through all columns
+        series = df[col]
+        max_len = max((
+            series.astype(str).map(len).max(),  # len of largest item
+            len(str(series.name))  # len of column name/header
+        )) + 2  # adding extra space
+        worksheet.set_column(idx, idx, max_len)  # set column width
 
-# print("goal amount printed for every month:")
-# goal_monthly = []
-# for period in test_periods:
-#     temp_periods = period.return_monthly_periods()
-#     for month in temp_periods:
-#         goal_monthly.append(month)
-# generate_compound_possibilities(test_initial_amount, goal_monthly, test_min_rate, test_max_rate)
+    writer.save()
+
+    # print("goal amount printed for every month:")
+    # goal_monthly = []
+    # for period in test_periods:
+    #     temp_periods = period.return_monthly_periods()
+    #     for month in temp_periods:
+    #         goal_monthly.append(month)
+    # generate_compound_possibilities(test_initial_amount, goal_monthly, test_min_rate, test_max_rate)
