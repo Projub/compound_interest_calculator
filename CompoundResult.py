@@ -92,12 +92,30 @@ def generate_cic_excel(period_list, start_date, start_portfolio):
     writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
 
     # TODO: Periods sheet in the front
-    # sheet_name = 'periods'
-    # df = pd.DataFrame()
-    # df.insert(loc=0, column='period', value=range(1, len(period_list)+1))
-    # df.insert(loc=0, column='start_date', value=range()
-    # df.insert(loc=0, column='end_date', value=range()
-    # df.insert(loc=0, column='monthly deposit', value=range()
+    sheet_name = 'periods'
+    df = pd.DataFrame()
+    df.insert(loc=0, column='period', value=range(1, len(period_list)+1))
+    dates = [dt.datetime.strptime(start_date, '%d/%m/%Y')]
+    for p in period_list:
+        dates.append(dates[-1] + pd.DateOffset(months=p.months))
+    month_strings = []
+    for d in dates:
+        month_strings.append(dt.date.strftime(d, '%Y-%m'))
+    df.insert(loc=1, column='start', value=month_strings[:-1])
+    df.insert(loc=2, column='end', value=month_strings[1:])
+    monthly_deposits = []
+    for p in period_list:
+        monthly_deposits.append(p.monthly_deposit)
+    df.insert(loc=3, column='monthly deposit', value=monthly_deposits)
+    df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+    worksheet = writer.sheets[sheet_name]  # pull worksheet object
+    for idx, col in enumerate(df):  # loop through all columns
+        series = df[col]
+        max_len = max((
+            series.astype(str).map(len).max(),  # len of largest item
+            len(str(series.name))  # len of column name/header
+        )) + 2  # adding extra space
+        worksheet.set_column(idx, idx, max_len)  # set column width
 
     sheet_name = 'possibilities'
     # column titles
@@ -150,6 +168,8 @@ def generate_cic_excel(period_list, start_date, start_portfolio):
         worksheet.set_column(idx, idx, max_len)  # set column width
 
     writer.save()
+
+    # TODO make static function for dynamically adjusting column widths and adding sheet to excelwriter
 
     # print("goal amount printed for every month:")
     # goal_monthly = []
