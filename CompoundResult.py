@@ -132,7 +132,7 @@ def generate_cic_excel(period_list, start_date, start_portfolio):
         year_months.append(date.strftime('%Y-%m'))
     df = pd.DataFrame([], columns=year_months)
     # generate rows
-    yoy_returns = range(26)
+    yoy_returns = range(41)
     for ret in yoy_returns:
         df = df.append(pd.DataFrame([generate_compound_result_array(start_portfolio, periods_months, ret)], columns=year_months))
     yoy_return_strings = []
