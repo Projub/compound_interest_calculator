@@ -16,9 +16,7 @@ class CompoundResult:
         self.monthly_deposit = monthly_deposit
         if initial_amount:
             self.result = initial_amount
-            print(initial_amount)
         else:
-            print(parent)
             temp_result = parent.result
             monthly_return = CompoundResult.monthly_returns[annual_return]
             for m in range(months):
@@ -68,7 +66,6 @@ def generate_compound_possibilities(initial_amount, periods, min_rate, max_rate)
         row = str(compound_results[0].result)
         for i in range(1, len(compound_results)):
             row = row + f" --{compound_results[i].annual_return}--> {compound_results[i].result}"
-        print(row)
 
 
 def generate_compound_result_array(initial_amount, periods, avg_return):
@@ -155,6 +152,8 @@ def generate_cic_excel(period_list, start_date, start_portfolio, path="excels"):
             len(str(series.name))  # len of column name/header
         )) + 2  # adding extra space
         worksheet.set_column(idx, idx, max_len)  # set column width
+    # freeze first percentage column
+    worksheet.freeze_panes(0, 1)
 
     sheet_name = 'yoy_mom'
     df = pd.DataFrame()
