@@ -1,4 +1,6 @@
 import os
+import sys
+
 import wx
 import wx.adv
 import cfg
@@ -123,8 +125,12 @@ class MainPanel(wx.Panel):
         main_sizer.AddSpacer(10)
 
         dir_label = wx.StaticText(self, label="Save directory:")
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+        elif __file__:
+            application_path = os.path.dirname(__file__)
         self.dir_picker = wx.DirPickerCtrl(self,
-                                           path=os.path.dirname(os.path.realpath(__file__)),
+                                           path=application_path,
                                            message="Please choose where to save the generated excel")
         self.dir_picker.SetMinSize((self.param_sizer.GetMinSize()[0], -1))
         dir_label.SetMinSize((self.dir_picker.GetMinSize()[0], -1))

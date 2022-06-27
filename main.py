@@ -1,7 +1,9 @@
+import os
+
 import view
 import wx
 
-# pyinstaller.exe .\main.py --windowed --onefile -n ci_calc
+# pyinstaller.exe --clean --paths "C:\repos\personal_repos\compound_interest_calculator" --windowed --add-data "media;media" --icon=media/cic.ico --onefile -n ci_calc --noconfirm main.py
 
 # import CompoundResult as Cr
 #
@@ -14,5 +16,5 @@ import wx
 
 app = wx.App()
 frame = view.MainFrame()
-# frame.SetIcon(wx.Icon("media/sofics_notext.ico"))
+frame.SetIcon(wx.Icon(os.path.join(os.path.dirname(__file__), "media/cic.ico")))
 app.MainLoop()
