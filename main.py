@@ -1,6 +1,8 @@
 import view
 import wx
 
+# pyinstaller.exe .\main.py --windowed --onefile -n ci_calc
+
 # import CompoundResult as Cr
 #
 # # My personal schedule:
