@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pandas as pd
 import datetime as dt
@@ -17,12 +18,15 @@ class CompoundResult:
         if initial_amount:
             self.result = initial_amount
         else:
-            temp_result = parent.result
             monthly_return = CompoundResult.monthly_returns[annual_return]
-            for m in range(months):
-                # TODO think about multiplying first, then adding deposit after
-                temp_result = (temp_result + monthly_deposit) * monthly_return
-            self.result = int(temp_result)
+            if parent:
+                temp_result = parent.result
+                for m in range(months):
+                    # TODO think about multiplying first, then adding deposit after
+                    temp_result = (temp_result + monthly_deposit) * monthly_return
+                self.result = int(temp_result)
+            else:
+                self.result = int(monthly_deposit * monthly_return)
 
     def has_parent(self):
         return self.parent is not None
@@ -69,7 +73,7 @@ def generate_compound_possibilities(initial_amount, periods, min_rate, max_rate)
 
 
 def generate_compound_result_array(initial_amount, periods, avg_return):
-    last_compound_result = CompoundResult(parent=None, annual_return=None, months=None, monthly_deposit=0, initial_amount=initial_amount)
+    last_compound_result = CompoundResult(parent=None, annual_return=avg_return, months=None, monthly_deposit=0, initial_amount=initial_amount)
     for p in periods:
         last_compound_result = CompoundResult(parent=last_compound_result, annual_return=avg_return, months=p.months, monthly_deposit=p.monthly_deposit)
     results = last_compound_result.get_compound_results()
@@ -84,7 +88,15 @@ def generate_compound_result_array(initial_amount, periods, avg_return):
 
 
 # TODO: check for date_string format
-def generate_cic_excel(period_list, start_date, start_portfolio, path="excels"):
+def generate_cic_excel(period_list, start_date, start_portfolio, path=None):
+    if not path:
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+        elif __file__:
+            application_path = os.path.dirname(__file__)
+        path = os.path.join(application_path, "temp")
+        if not os.path.exists(path):
+            os.makedirs(path)
     file_name = "ci_possibilities"
     excel_path = os.path.join(path, f"{file_name}.xlsx")
     orig_path = excel_path
@@ -94,7 +106,7 @@ def generate_cic_excel(period_list, start_date, start_portfolio, path="excels"):
         excel_path = os.path.splitext(orig_path)[0] + f" ({counter}).xlsx"
     writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
 
-    # TODO: Periods sheet in the front
+    # TODO: Periods sheet in the front? (although I find overview first nicer, personally)
     sheet_name = 'periods'
     df = pd.DataFrame()
     df.insert(loc=0, column='period', value=range(1, len(period_list)+1))
