@@ -72,6 +72,7 @@ class MainPanel(wx.Panel):
         main_sizer.AddSpacer(10)
         invested_title = wx.StaticText(self, label="Amount already invested:")
         self.invested_txt = wx.TextCtrl(self)
+        self.invested_txt.SetBackgroundColour(wx.Colour(255, 223, 200))
         self.invested_txt.Bind(wx.EVT_TEXT, self.number_field_changed)
         invested_hsizer = wx.BoxSizer(wx.HORIZONTAL)
         invested_hsizer.Add(invested_title, 0, wx.ALL | wx.CENTER, 5)
@@ -82,6 +83,7 @@ class MainPanel(wx.Panel):
         date_title = wx.StaticText(self, label="Starting date:")
         main_sizer.Add(date_title, 0, wx.TOP | wx.LEFT | wx.RIGHT | wx.CENTER, 5)
         self.date_picker = wx.adv.CalendarCtrl(self)
+        self.date_picker.SetBackgroundColour(wx.Colour(255, 223, 200))
         main_sizer.Add(self.date_picker, 0, wx.ALL | wx.CENTER, 5)
         date_title = wx.StaticText(self, label="Calculating until:")
         self.end_date_txt = wx.TextCtrl(self, value=wx.DateTime.Today().Format("%Y-%m"))
@@ -108,8 +110,10 @@ class MainPanel(wx.Panel):
         for i in range(3):
             h_sizer = wx.BoxSizer(wx.HORIZONTAL)
             months_txt = wx.TextCtrl(self)
+            months_txt.SetBackgroundColour(wx.Colour(255, 223, 200))
             months_txt.Bind(wx.EVT_TEXT, self.month_field_changed)
             amount_txt = wx.TextCtrl(self)
+            amount_txt.SetBackgroundColour(wx.Colour(255, 223, 200))
             amount_txt.Bind(wx.EVT_TEXT, self.number_field_changed)
             self.textctrl_dict[months_txt] = amount_txt
             h_sizer.Add(months_txt, 1, wx.BOTTOM | wx.LEFT | wx.RIGHT, 5)
@@ -133,6 +137,7 @@ class MainPanel(wx.Panel):
                                            path=application_path,
                                            message="Please choose where to save the generated excel")
         self.dir_picker.SetMinSize((self.param_sizer.GetMinSize()[0], -1))
+        self.dir_picker.GetChildren()[0].SetBackgroundColour(wx.Colour(255, 223, 200))
         dir_label.SetMinSize((self.dir_picker.GetMinSize()[0], -1))
         main_sizer.Add(dir_label, 0, wx.LEFT | wx.RIGHT | wx.CENTER, side_padding)
         main_sizer.Add(self.dir_picker, 0, wx.LEFT | wx.RIGHT | wx.TOP | wx.CENTER, 5)
@@ -152,8 +157,10 @@ class MainPanel(wx.Panel):
         h_sizer = wx.BoxSizer(wx.HORIZONTAL)
         months_txt = wx.TextCtrl(self)
         months_txt.MoveBeforeInTabOrder(self.plus_btn)
+        months_txt.SetBackgroundColour(wx.Colour(255, 223, 200))
         months_txt.Bind(wx.EVT_TEXT, self.month_field_changed)
         amount_txt = wx.TextCtrl(self)
+        amount_txt.SetBackgroundColour(wx.Colour(255, 223, 200))
         amount_txt.MoveBeforeInTabOrder(self.plus_btn)
         amount_txt.Bind(wx.EVT_TEXT, self.number_field_changed)
         self.textctrl_dict[months_txt] = amount_txt
@@ -161,9 +168,7 @@ class MainPanel(wx.Panel):
         h_sizer.Add(amount_txt, 1, wx.BOTTOM | wx.LEFT | wx.RIGHT, 5)
         self.param_sizer.Add(h_sizer, 1, wx.ALL | wx.EXPAND, 0)
 
-        self.Refresh()
         self.Fit()
-
         self.parent.Fit()
 
     def number_field_changed(self, event):
@@ -219,17 +224,17 @@ class MainPanel(wx.Panel):
             start_date = self.date_picker.GetDate().Format("%Y/%m/%d")
             portfolio_worth = self.invested_txt.GetValue()
             if portfolio_worth != "":
-                portfolio_worth = float(portfolio_worth)
+                portfolio_worth = float("".join(portfolio_worth.split()))  # ignore whitespaces + cast to float
             else:
                 portfolio_worth = 0
             periods = []
             for month_txt in self.textctrl_dict.keys():
                 months = month_txt.GetValue()
                 if months != "":  # no point doing anything if 0 months
-                    months = int(months)
+                    months = int("".join(months.split()))  # ignore whitespaces + cast to int
                     monthly_deposit = self.textctrl_dict[month_txt].GetValue()
                     if monthly_deposit != "":
-                        monthly_deposit = float(monthly_deposit)
+                        monthly_deposit = float("".join(monthly_deposit.split()))  # ignore whitespaces + cast to float
                     else:
                         monthly_deposit = 0
                     if months > 0:
