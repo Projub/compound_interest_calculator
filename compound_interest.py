@@ -6,32 +6,38 @@ import datetime as dt
 
 
 class CompoundResult:
+    """A CompoundResult instance points to the CompoundResult that preceded itself (self.parent). This way it can use
+    it's parent's result to calculate it's own result.
+
+    The class variable monthly_returns can be used to quickly get
+    the mom equivalent for a certain yoy return (e.g. monthly_returns[10] ** 12 == 1.10)"""
+
     monthly_returns = [None]*101
     for i in range(101):
         monthly_returns[i] = (1 + (i/100)) ** (1 / float(12))
+    # example use: monthly_returns[10] returns the month-over-month that results in a 10% year-over-year return
 
     def __init__(self, parent, annual_return, months, monthly_deposit=0, initial_amount=None):
         self.parent = parent
         self.annual_return = annual_return
         self.months = months
         self.monthly_deposit = monthly_deposit
-        if initial_amount:
+        if self.parent is not None:
+            monthly_return = CompoundResult.monthly_returns[annual_return]
+            temp_result = parent.result
+            for m in range(months):
+                temp_result = (temp_result + monthly_deposit) * monthly_return
+            self.result = int(temp_result)
+        elif initial_amount:  # First CompoundResult in a chain
             self.result = initial_amount
         else:
-            monthly_return = CompoundResult.monthly_returns[annual_return]
-            if parent:
-                temp_result = parent.result
-                for m in range(months):
-                    # TODO think about multiplying first, then adding deposit after
-                    temp_result = (temp_result + monthly_deposit) * monthly_return
-                self.result = int(temp_result)
-            else:
-                self.result = int(monthly_deposit * monthly_return)
+            raise Exception("CompoundResult constructor without a parent and no initial_amount was given!")
 
     def has_parent(self):
         return self.parent is not None
 
     def get_compound_results(self):
+        """Return a list of all results (floats) in the order they were calculated, to reach this CompoundResult."""
         results = []
         pointer = self
         results.insert(0, pointer.result)
@@ -42,53 +48,34 @@ class CompoundResult:
 
 
 class Period:
+    """A Period contains a certain amount of months and how much is invested each month during this time."""
     def __init__(self, months, monthly_deposit=0):
         self.months = months
         self.monthly_deposit = monthly_deposit
 
     def return_monthly_periods(self):
+        """Split up a Period into a list of periods of 1 month + return this list."""
         months = []
         for m in range(self.months):
             months.append(Period(months=1, monthly_deposit=self.monthly_deposit))
         return months
 
 
-# Not used: user friendly / results would get too big for excel file
-def generate_compound_possibilities(initial_amount, periods, min_rate, max_rate):
-    base = [CompoundResult(parent=None, annual_return=None, months=None, monthly_deposit=0, initial_amount=initial_amount)]
-    results = []
-    for p in periods:
-        for res in base:
-            for r in range(min_rate, max_rate+1):
-                results.append(CompoundResult(parent=res, annual_return=r, months=p.months, monthly_deposit=p.monthly_deposit))
-        base = results
-        if p != periods[-1]:
-            results = []
-
-    for res in results:
-        compound_results = res.get_compound_results()
-        row = str(compound_results[0].result)
-        for i in range(1, len(compound_results)):
-            row = row + f" --{compound_results[i].annual_return}--> {compound_results[i].result}"
-
-
 def generate_compound_result_array(initial_amount, periods, avg_return):
+    """creates CompoundResults based on given parameters. Once the last one is created, returns a list of results (
+    floats)."""
     last_compound_result = CompoundResult(parent=None, annual_return=avg_return, months=None, monthly_deposit=0, initial_amount=initial_amount)
     for p in periods:
         last_compound_result = CompoundResult(parent=last_compound_result, annual_return=avg_return, months=p.months, monthly_deposit=p.monthly_deposit)
     results = last_compound_result.get_compound_results()
-    # row = []
-    # for res in results:
-    #     row.append(f"{res.result} ({res.annual_return})")
-    # print(row)
+
     return results
 
-#periods = [Period(months=24, monthly_deposit=1250), Period(months=50, monthly_deposit=1000), Period(months=75), Period(months=75), Period(months=75)]
-#given_date = '01/09/2020'
 
-
-# TODO: check for date_string format
 def generate_cic_excel(period_list, start_date, start_portfolio, path=None):
+    """Generate a user friendly excel file containing the results of CompoundResult calculations for given periods,
+    start-date and current portfolio worth"""
+    # path + filename
     if not path:
         if getattr(sys, 'frozen', False):
             application_path = os.path.dirname(sys.executable)
@@ -99,6 +86,7 @@ def generate_cic_excel(period_list, start_date, start_portfolio, path=None):
             os.makedirs(path)
     file_name = "ci_possibilities"
     excel_path = os.path.join(path, f"{file_name}.xlsx")
+    # adjust filename suffix if name already exists:
     orig_path = excel_path
     counter = 1
     while os.path.exists(excel_path):
@@ -106,92 +94,88 @@ def generate_cic_excel(period_list, start_date, start_portfolio, path=None):
         excel_path = os.path.splitext(orig_path)[0] + f" ({counter}).xlsx"
     writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
 
-    # TODO: Periods sheet in the front? (although I find overview first nicer, personally)
+    # First sheet is an overview of the periods chosen and their dates
     sheet_name = 'periods'
     df = pd.DataFrame()
-    df.insert(loc=0, column='period', value=range(1, len(period_list)+1))
-    dates = [dt.datetime.strptime(start_date, '%Y/%m/%d')]
+    period_indices = range(1, len(period_list)+1)
+    df.insert(loc=0, column='period', value=pd.Series(period_indices))
+    dates = [dt.datetime.strptime(start_date, '%Y/%m/%d')]  # start date in dates list
     for p in period_list:
+        # add new date that is last date + # of months
         dates.append(dates[-1] + pd.DateOffset(months=p.months))
-    month_strings = []
+    month_strings = []  # readable format
     for d in dates:
         month_strings.append(dt.date.strftime(d, '%Y-%m'))
-    df.insert(loc=1, column='start', value=month_strings[:-1])
-    df.insert(loc=2, column='end', value=month_strings[1:])
+    df.insert(loc=1, column='start', value=pd.Series(month_strings[:-1]))  # last date is not a start date
+    df.insert(loc=2, column='end', value=pd.Series(month_strings[1:]))  # first date is not an end-date
     monthly_deposits = []
     for p in period_list:
         monthly_deposits.append(p.monthly_deposit)
-    df.insert(loc=3, column='monthly deposit', value=monthly_deposits)
+    df.insert(loc=3, column='monthly deposit', value=pd.Series(monthly_deposits))
     df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+    # Excel layout
     worksheet = writer.sheets[sheet_name]  # pull worksheet object
-    for idx, col in enumerate(df):  # loop through all columns
-        series = df[col]
-        max_len = max((
-            series.astype(str).map(len).max(),  # len of largest item
-            len(str(series.name))  # len of column name/header
-        )) + 2  # adding extra space
-        worksheet.set_column(idx, idx, max_len)  # set column width
+    adjust_excelsheet_column_widths(dataframe=df, worksheet=worksheet)
 
+    # Second sheet contains yoy returns as rows + months as columns and all possibilities calculated for period
+    #  sequence on the first sheet
     sheet_name = 'possibilities'
-    # column titles
-    periods_months = []
+    periods_months = []  # 1m periods
     date = dt.datetime.strptime(start_date, '%Y/%m/%d')
     dates = [date]
+    # split up all Periods into 1m Periods
     for p in period_list:
         periods_months = periods_months + p.return_monthly_periods()
     for m in periods_months:
         date = date + pd.DateOffset(months=1)
         dates.append(date)
-    year_months = []
+    year_months = []  # column titles
     for date in dates:
         year_months.append(date.strftime('%Y-%m'))
-    df = pd.DataFrame([], columns=year_months)
-    # generate rows
-    yoy_returns = range(41)
+    # nested list rows containing possibilities
+    rows = []
+    yoy_returns = range(41)  # calculating 40 rows: 0 -> 40 yoy
     for ret in yoy_returns:
-        df = df.append(pd.DataFrame([generate_compound_result_array(start_portfolio, periods_months, ret)], columns=year_months))
+        rows.append(generate_compound_result_array(start_portfolio, periods_months, ret))
+    df = pd.DataFrame(rows, columns=year_months)
+    # Insert first column with year-on-year returns
     yoy_return_strings = []
     for yoy in yoy_returns:
         yoy_return_strings.append(f'{yoy}%')
-    df.insert(loc=0, column='avg_yoy', value=yoy_return_strings)
-    print(df)
+    df.insert(loc=0, column='avg_yoy', value=pd.Series(yoy_return_strings))
     df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+    # Excel layout
     worksheet = writer.sheets[sheet_name]  # pull worksheet object
-    for idx, col in enumerate(df):  # loop through all columns
-        series = df[col]
-        max_len = max((
-            series.astype(str).map(len).max(),  # len of largest item
-            len(str(series.name))  # len of column name/header
-        )) + 2  # adding extra space
-        worksheet.set_column(idx, idx, max_len)  # set column width
-    # freeze first percentage column
-    worksheet.freeze_panes(0, 1)
+    adjust_excelsheet_column_widths(dataframe=df, worksheet=worksheet)
+    # freeze first row (months) and first column (percentages)
+    worksheet.freeze_panes(1, 1)
 
+    # Third sheet contains the mom return equivalents for yoy returns from 0 - 100%
     sheet_name = 'yoy_mom'
     df = pd.DataFrame()
-    df.insert(loc=0, column='avg_yoy(%)', value=range(101))
+    df.insert(loc=0, column='avg_yoy(%)', value=pd.Series(range(101)))
     avg_monthly_returns = []
     for ret in CompoundResult.monthly_returns:
         avg_monthly_returns.append(round((ret-1)*100, 3))
-    df.insert(loc=1, column='avg_mom(%)', value=avg_monthly_returns)
+    df.insert(loc=1, column='avg_mom(%)', value=pd.Series(avg_monthly_returns))
     df.to_excel(writer, sheet_name=sheet_name, index=False)  # send df to writer
+    # Excel layout
     worksheet = writer.sheets[sheet_name]  # pull worksheet object
-    for idx, col in enumerate(df):  # loop through all columns
-        series = df[col]
+    adjust_excelsheet_column_widths(dataframe=df, worksheet=worksheet)
+
+    writer.save()
+
+
+def adjust_excelsheet_column_widths(dataframe, worksheet):
+    """Adjusts excel worksheet column widths dynamically depending on item for readability."""
+    for idx, col in enumerate(dataframe):  # loop through all columns
+        series = dataframe[col]
         max_len = max((
             series.astype(str).map(len).max(),  # len of largest item
             len(str(series.name))  # len of column name/header
         )) + 2  # adding extra space
+
+        if max_len > 13:  # excel uses scientific notation from 1e11 onwards.
+            max_len = 13
+
         worksheet.set_column(idx, idx, max_len)  # set column width
-
-    writer.save()
-
-    # TODO make static function for dynamically adjusting column widths and adding sheet to excelwriter
-
-    # print("goal amount printed for every month:")
-    # goal_monthly = []
-    # for period in test_periods:
-    #     temp_periods = period.return_monthly_periods()
-    #     for month in temp_periods:
-    #         goal_monthly.append(month)
-    # generate_compound_possibilities(test_initial_amount, goal_monthly, test_min_rate, test_max_rate)

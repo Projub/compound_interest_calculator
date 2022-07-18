@@ -57,8 +57,9 @@ class MainFrame(wx.Frame):
         self.Centre()
         self.Raise()
 
-    def test(self, event):
-        print("Donate menu pressed")
+    # TODO implement menu clicks to go to wiki page / support us page
+    def go_to_support_us(self, event):
+        print("Support us pressed")
 
 
 class MainPanel(wx.Panel):
@@ -82,6 +83,7 @@ class MainPanel(wx.Panel):
 
         date_title = wx.StaticText(self, label="Starting date:")
         main_sizer.Add(date_title, 0, wx.TOP | wx.LEFT | wx.RIGHT | wx.CENTER, 5)
+        # TODO Tabbing gets stuck in the CalendarCtrl
         self.date_picker = wx.adv.CalendarCtrl(self)
         self.date_picker.SetBackgroundColour(wx.Colour(255, 223, 200))
         main_sizer.Add(self.date_picker, 0, wx.ALL | wx.CENTER, 5)
@@ -210,10 +212,6 @@ class MainPanel(wx.Panel):
         return months
 
     def generate_compound_interest_excel(self, evt):
-        # TODO folder picker => get values from widgets => call compoundresult function
-        # dir_dlg = wx.DirDialog(self, message="Please choose where to save the excel.", style=wx.DD_DIR_MUST_EXIST)
-        # dir_dlg.ShowModal()
-
         # parameters
         path = self.dir_picker.GetPath()
         if not os.path.exists(path):
