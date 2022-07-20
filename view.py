@@ -1,10 +1,11 @@
 import os
 import sys
+import webbrowser
 
 import wx
 import wx.adv
-import cfg
 
+import cfg
 import compound_interest as ci
 
 
@@ -19,35 +20,26 @@ class MainFrame(wx.Frame):
 
         menu_bar = wx.MenuBar()
         self.SetMenuBar(menu_bar)
-
-        # TODO probably one menu is alot cleaner, just show "Menu" ?
-
-        settings_menu = wx.Menu()
-        extended_item = settings_menu.Append(
-            wx.NewId(),
-            "Extend options",
-            "Redo screen with extra parameters",
-        )
-        # self.Bind(wx.EVT_MENU, open_wiki_page, wiki_item)
-        menu_bar.Append(settings_menu, "&Settings")
-
-        help_menu = wx.Menu()
-        wiki_item = help_menu.Append(
+        menu = wx.Menu()
+        explanation_item = menu.Append(
             wx.NewId(),
             "Explanation page",
-            "Open explanation page in the browser",
+            "",
         )
-        # self.Bind(wx.EVT_MENU, open_wiki_page, wiki_item)
-        menu_bar.Append(help_menu, "&Help")
-
-        support_menu = wx.Menu()
-        donate_item = support_menu.Append(
+        self.Bind(wx.EVT_MENU, self.open_ci_calc_page, explanation_item)
+        support_us_item = menu.Append(
             wx.NewId(),
-            "Donate",
-            "Go to donation page",
+            "Support us",
+            "",
         )
-        # self.Bind(wx.EVT_MENU, open_wiki_page, wiki_item)
-        menu_bar.Append(support_menu, "&Support us")
+        self.Bind(wx.EVT_MENU, self.open_support_us_page, support_us_item)
+        copyrights_item = menu.Append(
+            wx.NewId(),
+            "Copyright",
+            "",
+        )
+        self.Bind(wx.EVT_MENU, self.show_copyright_notice, copyrights_item)
+        menu_bar.Append(menu, "&Menu")
 
         MainPanel(self)
 
@@ -57,9 +49,22 @@ class MainFrame(wx.Frame):
         self.Centre()
         self.Raise()
 
-    # TODO implement menu clicks to go to wiki page / support us page
-    def go_to_support_us(self, event):
-        print("Support us pressed")
+    def open_ci_calc_page(self, event):
+        webbrowser.open("https://projub.com/compound_interest_calculator")
+
+    def open_support_us_page(self, event):
+        webbrowser.open("https://projub.com/support_us")
+
+    def show_copyright_notice(self, event):
+        wx.MessageBox("MIT License\n"
+                      "Copyright © 2022 Robin Boone\n\n"
+                      "pandas package:\n"
+                      "Copyright © 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData "
+                      "Development Team All rights reserved. Copyright (c) 2011-2021, Open source contributors.\n"
+                      "xlsxwriter package:\n"
+                      "Copyright © 2013-2022, John McNamara jmcnamara@cpan.org",
+                      "Copyright notice",
+                      wx.ICON_INFORMATION)
 
 
 class MainPanel(wx.Panel):

@@ -1,8 +1,8 @@
 import os
-import view
+
 import wx
 
-
+import view
 
 # pyinstaller.exe --clean --paths "C:\repos\personal_repos\compound_interest_calculator" --windowed --add-data "media;media" --icon=media/cic.ico --onefile -n ci_calc --noconfirm main.py
 

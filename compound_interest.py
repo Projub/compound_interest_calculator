@@ -1,8 +1,8 @@
+import datetime as dt
 import os
 import sys
 
 import pandas as pd
-import datetime as dt
 
 
 class CompoundResult:
