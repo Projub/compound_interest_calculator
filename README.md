@@ -2,7 +2,10 @@
 [![](media/cic_icon_256x256.png)](https://projub.com/compound_interest_calculator)  
   
 A free program to generate the compound interest possibilities for your specific situation.  
-Full explanation @ [projub.com](https://projub.com/compound_interest_calculator)
+Full explanation @ [projub.com](https://projub.com/compound_interest_calculator)  
+
+[![](media/ci_calc_windows.jpg)](https://projub.com/compound_interest_calculator)
+[![](media/ci_calc_mac.jpg)](https://projub.com/compound_interest_calculator)  
 
 ## Copyright notice
 Copyright (c) 2022 Robin Boone [License](LICENSE.md)
