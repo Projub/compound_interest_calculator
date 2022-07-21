@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 import webbrowser
 
@@ -90,7 +91,6 @@ class MainPanel(wx.Panel):
         main_sizer.Add(date_title, 0, wx.TOP | wx.LEFT | wx.RIGHT | wx.CENTER, 5)
         # TODO Tabbing gets stuck in the CalendarCtrl
         self.date_picker = wx.adv.CalendarCtrl(self)
-        self.date_picker.SetBackgroundColour(wx.Colour(255, 223, 200))
         main_sizer.Add(self.date_picker, 0, wx.ALL | wx.CENTER, 5)
         date_title = wx.StaticText(self, label="Calculating until:")
         self.end_date_txt = wx.TextCtrl(self, value=wx.DateTime.Today().Format("%Y-%m"))
@@ -138,8 +138,12 @@ class MainPanel(wx.Panel):
         dir_label = wx.StaticText(self, label="Save directory:")
         if getattr(sys, 'frozen', False):
             application_path = os.path.dirname(sys.executable)
-        elif __file__:
-            application_path = os.path.dirname(__file__)
+            if platform.system() == "Darwin":  # Mac
+                # get the usable parent folder of your app
+                while ".app" in application_path:
+                    application_path = os.path.split(application_path)[0]
+        else:
+            application_path = os.path.dirname(os.path.abspath(__file__))
         self.dir_picker = wx.DirPickerCtrl(self,
                                            path=application_path,
                                            message="Please choose where to save the generated excel")
