@@ -1,3 +1,4 @@
+import getpass
 import os
 import platform
 import sys
@@ -138,10 +139,8 @@ class MainPanel(wx.Panel):
         dir_label = wx.StaticText(self, label="Save directory:")
         if getattr(sys, 'frozen', False):
             application_path = os.path.dirname(sys.executable)
-            if platform.system() == "Darwin":  # Mac
-                # get the usable parent folder of your app
-                while ".app" in application_path:
-                    application_path = os.path.split(application_path)[0]
+            if platform.system() == "Darwin":  # Mac can use cache folders etc.
+                application_path = os.path.join(os.environ["HOME"], "Desktop")
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
         self.dir_picker = wx.DirPickerCtrl(self,
