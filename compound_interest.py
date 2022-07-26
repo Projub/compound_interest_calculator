@@ -28,7 +28,7 @@ class CompoundResult:
             for m in range(months):
                 temp_result = (temp_result + monthly_deposit) * monthly_return
             self.result = int(temp_result)
-        elif initial_amount:  # First CompoundResult in a chain
+        elif initial_amount is not None:  # First CompoundResult in a chain
             self.result = initial_amount
         else:
             raise Exception("CompoundResult constructor without a parent and no initial_amount was given!")
