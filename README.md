@@ -1,7 +1,7 @@
 # Compound interest calculator  
 [![](media/cic_icon_256x256.png)](https://projub.com/compound_interest_calculator)  
   
-A free program to generate the compound interest possibilities for your specific situation.  
+A free application to generate the compound interest possibilities for your specific situation.  
 Full explanation @ [projub.com](https://projub.com/compound_interest_calculator)  
 
 [![](media/ci_calc_windows_h512.jpg)](https://github.com/Robinsane/compound_interest_calculator/releases/download/v1.0.0/ci_calc.exe)
