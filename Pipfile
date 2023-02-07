@@ -10,6 +10,8 @@ pandas-datareader = "*"
 xlsxwriter = "*"
 wxpython = "*"
 pyinstaller = "*"
+setuptools = "*"
+future = "*"
 
 [dev-packages]
 
